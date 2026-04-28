@@ -5,6 +5,7 @@ const {
   createExpense,
   deleteExpense,
   getExpenses,
+  getExpenseStats,
   updateExpense,
 } = require('../controllers/expenseController');
 const { protect } = require('../middleware/authMiddleware');
@@ -14,6 +15,8 @@ const { EXPENSE_CATEGORIES } = require('../models/Expense');
 const router = express.Router();
 
 router.use(protect);
+
+router.get('/stats', getExpenseStats);
 
 router.get(
   '/',

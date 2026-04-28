@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const { Expense } = require('../models/Expense');
 const { predictCategory } = require('../services/mlService');
+const { getDashboardStats } = require('../services/statsService');
 const asyncHandler = require('../utils/asyncHandler');
 
 const getMonthRange = (month) => {
@@ -145,9 +146,16 @@ const deleteExpense = asyncHandler(async (req, res) => {
   });
 });
 
+const getExpenseStats = asyncHandler(async (req, res) => {
+  const stats = await getDashboardStats(req.user._id);
+
+  res.status(200).json(stats);
+});
+
 module.exports = {
   getExpenses,
   createExpense,
   updateExpense,
   deleteExpense,
+  getExpenseStats,
 };
