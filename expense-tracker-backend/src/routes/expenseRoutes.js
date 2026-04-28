@@ -40,10 +40,6 @@ router.post(
   [
     body('amount').isFloat({ min: 0 }).withMessage('Amount must be a number at least 0'),
     body('description').trim().notEmpty().withMessage('Description is required'),
-    body('category')
-      .optional()
-      .isIn(EXPENSE_CATEGORIES)
-      .withMessage('Invalid category'),
     body('date').optional().isISO8601().withMessage('Date must be a valid ISO date'),
   ],
   validateRequest,
