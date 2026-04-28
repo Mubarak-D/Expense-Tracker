@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const { Expense } = require('../models/Expense');
+const { predictCategory } = require('../services/mlService');
 const asyncHandler = require('../utils/asyncHandler');
 
 const getMonthRange = (month) => {
@@ -37,15 +38,16 @@ const getExpenses = asyncHandler(async (req, res) => {
 });
 
 const createExpense = asyncHandler(async (req, res) => {
-  const { amount, description, category = 'Other', date } = req.body;
+  const { amount, description, date } = req.body;
+  const prediction = await predictCategory(description);
 
   const expense = await Expense.create({
     userId: req.user._id,
     amount,
     description,
-    category,
-    predictedCategory: category,
-    predictionConfidence: 0,
+    category: prediction.category,
+    predictedCategory: prediction.category,
+    predictionConfidence: prediction.confidence,
     corrected: false,
     ...(date && { date }),
   });
@@ -78,6 +80,7 @@ const updateExpense = asyncHandler(async (req, res) => {
   }
 
   const { amount, description, category, date } = req.body;
+  const descriptionChanged = description !== undefined && description !== expense.description;
 
   if (amount !== undefined) {
     expense.amount = amount;
@@ -87,7 +90,19 @@ const updateExpense = asyncHandler(async (req, res) => {
     expense.description = description;
   }
 
-  if (category !== undefined) {
+  if (descriptionChanged && category === undefined) {
+    const prediction = await predictCategory(description);
+    expense.category = prediction.category;
+    expense.predictedCategory = prediction.category;
+    expense.predictionConfidence = prediction.confidence;
+    expense.corrected = false;
+  } else if (descriptionChanged && category !== undefined) {
+    const prediction = await predictCategory(description);
+    expense.predictedCategory = prediction.category;
+    expense.predictionConfidence = prediction.confidence;
+    expense.category = category;
+    expense.corrected = category !== expense.predictedCategory;
+  } else if (category !== undefined) {
     expense.category = category;
     expense.corrected = category !== expense.predictedCategory;
   }
