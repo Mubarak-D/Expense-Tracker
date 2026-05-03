@@ -11,6 +11,8 @@ const EXPENSE_CATEGORIES = [
   'Other',
 ];
 
+const CORRECTION_SOURCES = ['ml', 'manual'];
+
 const expenseSchema = new mongoose.Schema(
   {
     userId: {
@@ -49,6 +51,15 @@ const expenseSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    correctionSource: {
+      type: String,
+      enum: CORRECTION_SOURCES,
+      default: 'ml',
+    },
+    correctedAt: {
+      type: Date,
+      default: null,
+    },
     date: {
       type: Date,
       default: Date.now,
@@ -62,4 +73,5 @@ const expenseSchema = new mongoose.Schema(
 module.exports = {
   Expense: mongoose.model('Expense', expenseSchema),
   EXPENSE_CATEGORIES,
+  CORRECTION_SOURCES,
 };

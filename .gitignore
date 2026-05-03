@@ -1,5 +1,59 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# Node / backend
+node_modules/
+coverage/
+
+# Python / ML service
 venv/
+.venv/
 __pycache__/
 **/__pycache__/
 *.pyc
+*.pyo
+*.pyd
+.pytest_cache/
 models/*.joblib
+expense-ml-service/models/*.joblib
+
+# Flutter / Dart
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+**/.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+**/.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+**/build/
+coverage/
+
+# Flutter generated symbols/maps
+app.*.symbols
+app.*.map.json
+
+# Android build artifacts
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+
+# Local generated output
+.target-expense-tracker/

@@ -1,182 +1,130 @@
-# Expense Tracker ML Categorization Service
+# ETML - Expense Tracker with ML Categorization
 
-A Python FastAPI microservice that predicts an expense category from a short text description.
+ETML is a full-stack expense tracker with machine-learning category
+prediction, manual correction feedback, and a polished Flutter dashboard.
 
-This is Phase 1 of the Expense Tracker project. It only includes the machine learning service. The Node.js backend and Flutter app are intentionally not included yet.
-
-## Tech Stack
-
-- Python
-- FastAPI
-- scikit-learn
-- pandas
-- joblib
-- uvicorn
-
-## Folder Structure
+The project is organized as a monorepo:
 
 ```text
-expense-ml-service/
-|-- app/
-|   |-- main.py
-|   |-- schemas.py
-|   `-- model_loader.py
-|-- data/
-|   `-- expenses.csv
-|-- models/
-|   `-- .gitkeep
-|-- .gitignore
-|-- train_model.py
-|-- requirements.txt
+ETML/
+|-- expense-ml-service/       FastAPI + scikit-learn categorization service
+|-- expense-tracker-backend/  Node.js/Express/MongoDB API
+|-- etml_mobile/              Flutter app
+|-- PHASE2_FEEDBACK_PIPELINE.md
+|-- PHASE3_INSIGHTS_DASHBOARD.md
 `-- README.md
 ```
 
-## Categories
+## Current Features
 
-The model predicts one of these categories:
+- User registration and login with JWT authentication
+- Secure token storage in the Flutter app
+- Expense creation and transaction listing
+- ML category prediction from expense descriptions
+- Manual category correction
+- Correction metadata for future retraining
+- Feedback export and summary endpoints
+- Flutter ML feedback card and export action
+- Flutter Insights dashboard with monthly totals, category breakdown, and
+  last-30-days trend
 
-- Food
-- Transport
-- Bills
-- Shopping
-- Health
-- Entertainment
-- Education
-- Other
-
-## How The Model Works
-
-The training script loads labeled expense descriptions from `data/expenses.csv`.
-
-It then:
-
-1. Cleans the text by lowercasing it and removing unnecessary symbols.
-2. Splits the data into training and test sets.
-3. Trains a scikit-learn pipeline with:
-   - `TfidfVectorizer` for text features
-   - `MultinomialNB` for classification
-4. Prints accuracy and a classification report.
-5. Saves the trained model to `models/expense_classifier.joblib`.
-
-## Setup
-
-Run these commands from inside the `expense-ml-service` folder:
-
-```bash
-python -m venv venv
-```
-
-On Windows PowerShell:
-
-```bash
-.\venv\Scripts\Activate.ps1
-```
-
-On macOS or Linux:
-
-```bash
-source venv/bin/activate
-```
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-## Train The Model
-
-```bash
-python train_model.py
-```
-
-This creates:
+## Architecture
 
 ```text
-models/expense_classifier.joblib
+Flutter app
+   |
+   | REST + JWT
+   v
+Node.js backend
+   |
+   | /predict
+   v
+FastAPI ML service
+   |
+   v
+scikit-learn expense classifier
 ```
 
-The trained model file is ignored by Git because it is generated from the dataset and training script.
+The model does not retrain automatically when a user corrects a category.
+Corrections are stored as feedback data and can be exported for future offline
+retraining.
 
-## Run FastAPI
+## Backend
 
 ```bash
+cd expense-tracker-backend
+npm install
+cp .env.example .env
+npm run dev
+```
+
+Important endpoints:
+
+```http
+POST /api/auth/register
+POST /api/auth/login
+GET  /api/expenses
+POST /api/expenses
+PUT  /api/expenses/:id
+GET  /api/expenses/stats
+GET  /api/expenses/feedback/export
+GET  /api/expenses/feedback/summary
+```
+
+## ML Service
+
+```bash
+cd expense-ml-service
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python train_model.py
 uvicorn app.main:app --reload
 ```
 
-The service will run at:
+Default service URL:
 
 ```text
 http://127.0.0.1:8000
 ```
 
-Interactive API docs are available at:
+## Flutter App
 
-```text
-http://127.0.0.1:8000/docs
+```bash
+cd etml_mobile
+flutter pub get
+flutter run -d chrome
 ```
 
-## API Endpoints
+For web builds:
 
-### Health Check
-
-```http
-GET /
+```bash
+flutter build web
 ```
 
-Example response:
+## Verification
 
-```json
-{
-  "service": "Expense Tracker ML Categorization Service",
-  "status": "running"
-}
+Useful checks:
+
+```bash
+cd etml_mobile
+flutter analyze
+flutter test
+flutter build web
 ```
 
-### Predict Category
-
-```http
-POST /predict
+```bash
+cd expense-tracker-backend
+node --check src/server.js
 ```
 
-Example request:
-
-```json
-{
-  "description": "uber ride home"
-}
+```bash
+cd expense-ml-service
+python -m compileall app
 ```
 
-Example response:
+## Documentation
 
-```json
-{
-  "category": "Transport",
-  "confidence": 0.88,
-  "all_probabilities": {
-    "Bills": 0.01,
-    "Education": 0.01,
-    "Entertainment": 0.02,
-    "Food": 0.02,
-    "Health": 0.01,
-    "Other": 0.02,
-    "Shopping": 0.03,
-    "Transport": 0.88
-  }
-}
-```
-
-## Validation
-
-- Empty descriptions return HTTP 400.
-- If the trained model file does not exist, `/predict` returns a clear error telling you to run `python train_model.py` first.
-
-## Future Improvements
-
-- Add more real transaction data.
-- Add merchant normalization.
-- Add confidence thresholds for uncertain predictions.
-- Add model versioning.
-- Add automated tests.
-- Add a Node.js backend that calls this service.
-- Add a Flutter app for user expense entry.
+- `PHASE2_FEEDBACK_PIPELINE.md` documents correction metadata, export, and
+  summary behavior.
+- `PHASE3_INSIGHTS_DASHBOARD.md` documents the Flutter Insights dashboard.

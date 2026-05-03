@@ -115,7 +115,9 @@ const getDashboardStats = async (userId) => {
   const dailyAverage = roundCurrency(thisMonthTotal / now.getUTCDate());
   const monthComparisonPercentage =
     lastMonthTotal === 0
-      ? (thisMonthTotal > 0 ? 100 : 0)
+      ? thisMonthTotal > 0
+        ? 100
+        : 0
       : roundCurrency(((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100);
 
   return {

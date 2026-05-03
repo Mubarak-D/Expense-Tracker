@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 
 const { Expense } = require('../models/Expense');
+const {
+  applyCategoryFeedback,
+  applyMlFeedback,
+  getFeedbackExport,
+  getFeedbackSummary,
+} = require('../services/feedbackService');
 const { predictCategory } = require('../services/mlService');
 const { getDashboardStats } = require('../services/statsService');
 const asyncHandler = require('../utils/asyncHandler');
@@ -14,7 +20,6 @@ const getMonthRange = (month) => {
 
 const getExpenses = asyncHandler(async (req, res) => {
   const { month, category, sort = 'desc' } = req.query;
-
   const query = {
     userId: req.user._id,
   };
@@ -42,16 +47,16 @@ const createExpense = asyncHandler(async (req, res) => {
   const { amount, description, date } = req.body;
   const prediction = await predictCategory(description);
 
-  const expense = await Expense.create({
+  const expense = new Expense({
     userId: req.user._id,
     amount,
     description,
-    category: prediction.category,
-    predictedCategory: prediction.category,
-    predictionConfidence: prediction.confidence,
-    corrected: false,
     ...(date && { date }),
   });
+
+  applyMlFeedback(expense, prediction);
+
+  await expense.save();
 
   res.status(201).json({
     expense,
@@ -93,19 +98,14 @@ const updateExpense = asyncHandler(async (req, res) => {
 
   if (descriptionChanged && category === undefined) {
     const prediction = await predictCategory(description);
-    expense.category = prediction.category;
-    expense.predictedCategory = prediction.category;
-    expense.predictionConfidence = prediction.confidence;
-    expense.corrected = false;
+    applyMlFeedback(expense, prediction);
   } else if (descriptionChanged && category !== undefined) {
     const prediction = await predictCategory(description);
     expense.predictedCategory = prediction.category;
     expense.predictionConfidence = prediction.confidence;
-    expense.category = category;
-    expense.corrected = category !== expense.predictedCategory;
+    applyCategoryFeedback(expense, category);
   } else if (category !== undefined) {
-    expense.category = category;
-    expense.corrected = category !== expense.predictedCategory;
+    applyCategoryFeedback(expense, category);
   }
 
   if (date !== undefined) {
@@ -152,10 +152,24 @@ const getExpenseStats = asyncHandler(async (req, res) => {
   res.status(200).json(stats);
 });
 
+const exportExpenseFeedback = asyncHandler(async (req, res) => {
+  const feedback = await getFeedbackExport(Expense, req.user._id);
+
+  res.status(200).json(feedback);
+});
+
+const getExpenseFeedbackSummary = asyncHandler(async (req, res) => {
+  const summary = await getFeedbackSummary(Expense, req.user._id);
+
+  res.status(200).json(summary);
+});
+
 module.exports = {
   getExpenses,
   createExpense,
   updateExpense,
   deleteExpense,
   getExpenseStats,
+  exportExpenseFeedback,
+  getExpenseFeedbackSummary,
 };

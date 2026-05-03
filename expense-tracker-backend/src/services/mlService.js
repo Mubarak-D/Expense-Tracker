@@ -11,7 +11,6 @@ const fallbackPrediction = {
 const predictCategory = async (description) => {
   try {
     const baseUrl = process.env.ML_SERVICE_URL || 'http://localhost:8000';
-
     const response = await axios.post(
       `${baseUrl}/predict`,
       { description },
@@ -20,16 +19,16 @@ const predictCategory = async (description) => {
       }
     );
 
-    const predictedCategory = response.data?.category;
+    const category = response.data?.category;
 
-    if (!EXPENSE_CATEGORIES.includes(predictedCategory)) {
+    if (!EXPENSE_CATEGORIES.includes(category)) {
       return fallbackPrediction;
     }
 
     const confidence = Number(response.data?.confidence);
 
     return {
-      category: predictedCategory,
+      category,
       confidence: Number.isFinite(confidence) ? Math.min(Math.max(confidence, 0), 1) : 0,
       allProbabilities: response.data?.all_probabilities || {},
     };

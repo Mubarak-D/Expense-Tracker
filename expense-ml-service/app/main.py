@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.model_loader import MODEL_PATH, load_model
 from app.schemas import PredictionRequest, PredictionResponse
@@ -8,6 +9,17 @@ app = FastAPI(
     title="Expense Tracker ML Categorization Service",
     version="1.0.0",
     description="Predicts an expense category from a text description.",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 

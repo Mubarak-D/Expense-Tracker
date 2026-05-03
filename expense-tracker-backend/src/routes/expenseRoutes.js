@@ -4,6 +4,8 @@ const { body, param, query } = require('express-validator');
 const {
   createExpense,
   deleteExpense,
+  exportExpenseFeedback,
+  getExpenseFeedbackSummary,
   getExpenses,
   getExpenseStats,
   updateExpense,
@@ -17,6 +19,8 @@ const router = express.Router();
 router.use(protect);
 
 router.get('/stats', getExpenseStats);
+router.get('/feedback/export', exportExpenseFeedback);
+router.get('/feedback/summary', getExpenseFeedbackSummary);
 
 router.get(
   '/',
@@ -25,10 +29,7 @@ router.get(
       .optional()
       .matches(/^\d{4}-(0[1-9]|1[0-2])$/)
       .withMessage('Month must be in YYYY-MM format'),
-    query('category')
-      .optional()
-      .isIn(EXPENSE_CATEGORIES)
-      .withMessage('Invalid category'),
+    query('category').optional().isIn(EXPENSE_CATEGORIES).withMessage('Invalid category'),
     query('sort').optional().isIn(['asc', 'desc']).withMessage('Sort must be asc or desc'),
   ],
   validateRequest,
@@ -40,6 +41,10 @@ router.post(
   [
     body('amount').isFloat({ min: 0 }).withMessage('Amount must be a number at least 0'),
     body('description').trim().notEmpty().withMessage('Description is required'),
+    body('category')
+      .optional()
+      .isIn(EXPENSE_CATEGORIES)
+      .withMessage('Invalid category'),
     body('date').optional().isISO8601().withMessage('Date must be a valid ISO date'),
   ],
   validateRequest,
