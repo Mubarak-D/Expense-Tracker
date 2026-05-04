@@ -29,7 +29,7 @@ class TransactionsController extends AsyncNotifier<List<Expense>> {
           amount: amount,
           description: description,
           category: category,
-    );
+        );
     final current = state.value ?? const <Expense>[];
     state = AsyncData([expense, ...current]);
     ref.invalidate(feedbackSummaryProvider);
@@ -45,6 +45,10 @@ class TransactionsController extends AsyncNotifier<List<Expense>> {
         else
           expense,
     ]);
+  }
+
+  void replace(List<Expense> expenses) {
+    state = AsyncData(expenses);
   }
 
   Future<Expense> updateCategory(String expenseId, String category) async {

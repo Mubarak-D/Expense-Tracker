@@ -4,6 +4,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const expenseRoutes = require('./routes/expenseRoutes');
 const goalRoutes = require('./routes/goalRoutes');
+const recurringExpenseRoutes = require('./routes/recurringExpenseRoutes');
 const errorMiddleware = require('./middleware/errorMiddleware');
 
 const app = express();
@@ -21,6 +22,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/goals', goalRoutes);
+app.use('/api/recurring-expenses', recurringExpenseRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
@@ -32,6 +34,3 @@ app.use((req, res) => {
 app.use(errorMiddleware);
 
 module.exports = app;
-
-
-

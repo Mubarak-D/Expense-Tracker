@@ -371,6 +371,67 @@ class BudgetGoal {
   }
 }
 
+class RecurringExpense {
+  const RecurringExpense({
+    required this.id,
+    required this.amount,
+    required this.description,
+    required this.category,
+    required this.frequency,
+    required this.nextRunDate,
+    required this.active,
+    this.lastPostedAt,
+  });
+
+  final String id;
+  final double amount;
+  final String description;
+  final String category;
+  final String frequency;
+  final DateTime nextRunDate;
+  final bool active;
+  final DateTime? lastPostedAt;
+
+  factory RecurringExpense.fromJson(Map<String, dynamic> json) {
+    return RecurringExpense(
+      id: '${json['_id'] ?? json['id'] ?? ''}',
+      amount: (json['amount'] as num?)?.toDouble() ?? 0,
+      description: '${json['description'] ?? ''}',
+      category: '${json['category'] ?? 'Other'}',
+      frequency: '${json['frequency'] ?? 'monthly'}',
+      nextRunDate:
+          DateTime.tryParse('${json['nextRunDate'] ?? ''}') ?? DateTime.now(),
+      active: json['active'] != false,
+      lastPostedAt: DateTime.tryParse('${json['lastPostedAt'] ?? ''}'),
+    );
+  }
+}
+
+class RecurringPostResult {
+  const RecurringPostResult({
+    required this.expense,
+    required this.recurringExpense,
+  });
+
+  final Expense expense;
+  final RecurringExpense recurringExpense;
+
+  factory RecurringPostResult.fromJson(Map<String, dynamic> json) {
+    final expense = json['expense'];
+    final recurringExpense = json['recurringExpense'];
+
+    if (expense is! Map<String, dynamic> ||
+        recurringExpense is! Map<String, dynamic>) {
+      throw ApiException('Recurring expense post response was empty.');
+    }
+
+    return RecurringPostResult(
+      expense: Expense.fromJson(expense),
+      recurringExpense: RecurringExpense.fromJson(recurringExpense),
+    );
+  }
+}
+
 class ApiService {
   ApiService({FlutterSecureStorage? storage})
     : _storage = storage ?? const FlutterSecureStorage(),
@@ -611,6 +672,75 @@ class ApiService {
     }
   }
 
+  Future<List<RecurringExpense>> getRecurringExpenses() async {
+    try {
+      final response = await _api.get<Map<String, dynamic>>(
+        '/api/recurring-expenses',
+      );
+      final items = response.data?['recurringExpenses'];
+      if (items is! List) return const [];
+      return items
+          .whereType<Map<String, dynamic>>()
+          .map(RecurringExpense.fromJson)
+          .toList(growable: false);
+    } on DioException catch (error) {
+      throw ApiException(
+        _messageFromDio(error, fallback: 'Could not load recurring expenses.'),
+      );
+    }
+  }
+
+  Future<RecurringExpense> createRecurringExpense({
+    required double amount,
+    required String description,
+    required String category,
+    required DateTime nextRunDate,
+  }) async {
+    try {
+      final response = await _api.post<Map<String, dynamic>>(
+        '/api/recurring-expenses',
+        data: {
+          'amount': amount,
+          'description': description.trim(),
+          'category': category,
+          'nextRunDate': nextRunDate.toUtc().toIso8601String(),
+        },
+      );
+      final recurringExpense = response.data?['recurringExpense'];
+      if (recurringExpense is! Map<String, dynamic>) {
+        throw ApiException('Recurring expense response was empty.');
+      }
+      return RecurringExpense.fromJson(recurringExpense);
+    } on DioException catch (error) {
+      throw ApiException(
+        _messageFromDio(error, fallback: 'Could not save recurring expense.'),
+      );
+    }
+  }
+
+  Future<RecurringPostResult> postRecurringExpense(String id) async {
+    try {
+      final response = await _api.post<Map<String, dynamic>>(
+        '/api/recurring-expenses/$id/post',
+      );
+      return RecurringPostResult.fromJson(response.data ?? {});
+    } on DioException catch (error) {
+      throw ApiException(
+        _messageFromDio(error, fallback: 'Could not post recurring expense.'),
+      );
+    }
+  }
+
+  Future<void> deleteRecurringExpense(String id) async {
+    try {
+      await _api.delete<Map<String, dynamic>>('/api/recurring-expenses/$id');
+    } on DioException catch (error) {
+      throw ApiException(
+        _messageFromDio(error, fallback: 'Could not delete recurring expense.'),
+      );
+    }
+  }
+
   String _messageFromDio(DioException error, {required String fallback}) {
     final data = error.response?.data;
     if (data is Map && data['message'] != null) return '${data['message']}';
@@ -621,4 +751,3 @@ class ApiService {
     return fallback;
   }
 }
-
