@@ -1,16 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/constants.dart';
 import '../core/theme.dart';
 import '../providers/expense_provider.dart';
+import '../services/api_service.dart';
+import '../widgets/category_badge.dart';
 import '../widgets/expense_card.dart';
 import '../widgets/feedback_panel.dart';
+import '../widgets/recurring_expenses_panel.dart';
 
-class TransactionsScreen extends ConsumerWidget {
+class TransactionsScreen extends ConsumerStatefulWidget {
   const TransactionsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TransactionsScreen> createState() => _TransactionsScreenState();
+}
+
+class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
+  final _searchController = TextEditingController();
+  String _query = '';
+  String? _category;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final transactions = ref.watch(transactionsProvider);
 
     return Scaffold(
@@ -35,20 +54,35 @@ class TransactionsScreen extends ConsumerWidget {
               const SizedBox(height: 24),
               const FeedbackPanel(),
               const SizedBox(height: 18),
+              const RecurringExpensesPanel(),
+              const SizedBox(height: 18),
+              _LedgerFilters(
+                controller: _searchController,
+                query: _query,
+                category: _category,
+                onQueryChanged: (value) => setState(() => _query = value),
+                onCategoryChanged: (value) => setState(() => _category = value),
+              ),
+              const SizedBox(height: 18),
               transactions.when(
                 data: (items) {
+                  final visibleItems = _filterExpenses(items);
+
                   if (items.isEmpty) return const _EmptyLedger();
+                  if (visibleItems.isEmpty) return const _NoFilterMatches();
+
                   return Column(
                     children: [
                       _TotalStrip(
-                        total: items.fold<double>(
+                        total: visibleItems.fold<double>(
                           0,
                           (sum, item) => sum + item.amount,
                         ),
+                        count: visibleItems.length,
                       ),
                       const SizedBox(height: 18),
-                      for (var i = 0; i < items.length; i++)
-                        ExpenseCard(expense: items[i], index: i),
+                      for (var i = 0; i < visibleItems.length; i++)
+                        ExpenseCard(expense: visibleItems[i], index: i),
                     ],
                   );
                 },
@@ -61,12 +95,137 @@ class TransactionsScreen extends ConsumerWidget {
       ),
     );
   }
+
+  List<Expense> _filterExpenses(List<Expense> items) {
+    final normalizedQuery = _query.trim().toLowerCase();
+
+    return items
+        .where((expense) {
+          final matchesCategory =
+              _category == null || expense.category == _category;
+          final matchesQuery =
+              normalizedQuery.isEmpty ||
+              expense.description.toLowerCase().contains(normalizedQuery) ||
+              expense.category.toLowerCase().contains(normalizedQuery) ||
+              expense.predictedCategory.toLowerCase().contains(normalizedQuery);
+
+          return matchesCategory && matchesQuery;
+        })
+        .toList(growable: false);
+  }
+}
+
+class _LedgerFilters extends StatelessWidget {
+  const _LedgerFilters({
+    required this.controller,
+    required this.query,
+    required this.category,
+    required this.onQueryChanged,
+    required this.onCategoryChanged,
+  });
+
+  final TextEditingController controller;
+  final String query;
+  final String? category;
+  final ValueChanged<String> onQueryChanged;
+  final ValueChanged<String?> onCategoryChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.045),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: controller,
+            onChanged: onQueryChanged,
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              hintText: 'Search ledger',
+              prefixIcon: const Icon(Icons.search_rounded),
+              suffixIcon: query.isEmpty
+                  ? null
+                  : IconButton(
+                      onPressed: () {
+                        controller.clear();
+                        onQueryChanged('');
+                      },
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _AllCategoryChip(
+                selected: category == null,
+                onTap: () => onCategoryChanged(null),
+              ),
+              for (final item in ApiConstants.categories)
+                CategoryBadge(
+                  category: item,
+                  compact: true,
+                  selected: category == item,
+                  onTap: () =>
+                      onCategoryChanged(category == item ? null : item),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AllCategoryChip extends StatelessWidget {
+  const _AllCategoryChip({required this.selected, required this.onTap});
+
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected
+              ? EtmlColors.cyan.withValues(alpha: 0.14)
+              : Colors.white.withValues(alpha: 0.055),
+          borderRadius: BorderRadius.circular(99),
+          border: Border.all(
+            color: selected
+                ? EtmlColors.cyan.withValues(alpha: 0.38)
+                : Colors.white.withValues(alpha: 0.08),
+          ),
+        ),
+        child: Text(
+          'All',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: selected ? EtmlColors.cyan : EtmlColors.muted,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _TotalStrip extends StatelessWidget {
-  const _TotalStrip({required this.total});
+  const _TotalStrip({required this.total, required this.count});
 
   final double total;
+  final int count;
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +241,7 @@ class _TotalStrip extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Visible spend',
+              '$count visible ${count == 1 ? 'item' : 'items'}',
               style: Theme.of(context).textTheme.labelLarge,
             ),
           ),
@@ -160,6 +319,39 @@ class _EmptyLedger extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'Add your first expense and it will appear here with its ML category.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NoFilterMatches extends StatelessWidget {
+  const _NoFilterMatches();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.055),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.filter_alt_off_rounded,
+            color: EtmlColors.cyan,
+            size: 42,
+          ),
+          const SizedBox(height: 14),
+          Text('No matches', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 6),
+          Text(
+            'Try another search or category.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,
           ),

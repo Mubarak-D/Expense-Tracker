@@ -12,6 +12,9 @@ ETML/
 |-- etml_mobile/              Flutter app
 |-- PHASE2_FEEDBACK_PIPELINE.md
 |-- PHASE3_INSIGHTS_DASHBOARD.md
+|-- PHASE4_BUDGET_GOALS.md
+|-- PHASE5_RECURRING_EXPENSES.md
+|-- PHASE6_LEDGER_FILTERS.md
 `-- README.md
 ```
 
@@ -27,6 +30,9 @@ ETML/
 - Flutter ML feedback card and export action
 - Flutter Insights dashboard with monthly totals, category breakdown, and
   last-30-days trend
+- Monthly budget goals with progress and achievement states
+- Recurring expense templates that can be posted into the ledger
+- Local ledger search and category filters
 
 ## Architecture
 
@@ -69,6 +75,12 @@ PUT  /api/expenses/:id
 GET  /api/expenses/stats
 GET  /api/expenses/feedback/export
 GET  /api/expenses/feedback/summary
+POST /api/goals
+GET  /api/goals/current
+GET  /api/recurring-expenses
+POST /api/recurring-expenses
+POST /api/recurring-expenses/:id/post
+DELETE /api/recurring-expenses/:id
 ```
 
 ## ML Service
@@ -128,3 +140,6 @@ python -m compileall app
 - `PHASE2_FEEDBACK_PIPELINE.md` documents correction metadata, export, and
   summary behavior.
 - `PHASE3_INSIGHTS_DASHBOARD.md` documents the Flutter Insights dashboard.
+- `PHASE4_BUDGET_GOALS.md` documents monthly budget goals and progress.
+- `PHASE5_RECURRING_EXPENSES.md` documents recurring expense templates.
+- `PHASE6_LEDGER_FILTERS.md` documents local ledger search and filters.
