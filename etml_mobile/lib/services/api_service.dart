@@ -285,6 +285,92 @@ class ExpenseStats {
   }
 }
 
+class BudgetAchievement {
+  const BudgetAchievement({
+    required this.title,
+    required this.description,
+    required this.unlocked,
+  });
+
+  final String title;
+  final String description;
+  final bool unlocked;
+
+  factory BudgetAchievement.fromJson(Map<String, dynamic> json) {
+    return BudgetAchievement(
+      title: '${json['title'] ?? 'Budget Guardian'}',
+      description: '${json['description'] ?? ''}',
+      unlocked: json['unlocked'] == true,
+    );
+  }
+}
+
+class BudgetGoalProgress {
+  const BudgetGoalProgress({
+    required this.goalSet,
+    required this.month,
+    this.monthlyLimit = 0,
+    this.totalSpent = 0,
+    this.remaining = 0,
+    this.progressPercentage = 0,
+    this.status,
+    this.achievement,
+    this.message,
+  });
+
+  final bool goalSet;
+  final String month;
+  final double monthlyLimit;
+  final double totalSpent;
+  final double remaining;
+  final int progressPercentage;
+  final String? status;
+  final BudgetAchievement? achievement;
+  final String? message;
+
+  bool get isOnTrack => status == 'on_track';
+  bool get isWarning => status == 'warning';
+  bool get isOverBudget => status == 'over_budget';
+
+  factory BudgetGoalProgress.fromJson(Map<String, dynamic> json) {
+    final achievement = json['achievement'];
+
+    return BudgetGoalProgress(
+      goalSet: json['goalSet'] != false,
+      month: '${json['month'] ?? ''}',
+      monthlyLimit: (json['monthlyLimit'] as num?)?.toDouble() ?? 0,
+      totalSpent: (json['totalSpent'] as num?)?.toDouble() ?? 0,
+      remaining: (json['remaining'] as num?)?.toDouble() ?? 0,
+      progressPercentage: (json['progressPercentage'] as num?)?.round() ?? 0,
+      status: json['status'] == null ? null : '${json['status']}',
+      achievement: achievement is Map<String, dynamic>
+          ? BudgetAchievement.fromJson(achievement)
+          : null,
+      message: json['message'] == null ? null : '${json['message']}',
+    );
+  }
+}
+
+class BudgetGoal {
+  const BudgetGoal({
+    required this.id,
+    required this.month,
+    required this.monthlyLimit,
+  });
+
+  final String id;
+  final String month;
+  final double monthlyLimit;
+
+  factory BudgetGoal.fromJson(Map<String, dynamic> json) {
+    return BudgetGoal(
+      id: '${json['_id'] ?? json['id'] ?? ''}',
+      month: '${json['month'] ?? ''}',
+      monthlyLimit: (json['monthlyLimit'] as num?)?.toDouble() ?? 0,
+    );
+  }
+}
+
 class ApiService {
   ApiService({FlutterSecureStorage? storage})
     : _storage = storage ?? const FlutterSecureStorage(),
@@ -490,6 +576,41 @@ class ApiService {
     }
   }
 
+  Future<BudgetGoalProgress> getCurrentGoal({String? month}) async {
+    try {
+      final response = await _api.get<Map<String, dynamic>>(
+        '/api/goals/current',
+        queryParameters: {if (month != null) 'month': month},
+      );
+      return BudgetGoalProgress.fromJson(response.data ?? {});
+    } on DioException catch (error) {
+      throw ApiException(
+        _messageFromDio(error, fallback: 'Could not load budget goal.'),
+      );
+    }
+  }
+
+  Future<BudgetGoal> upsertGoal({
+    String? month,
+    required double monthlyLimit,
+  }) async {
+    try {
+      final response = await _api.post<Map<String, dynamic>>(
+        '/api/goals',
+        data: {if (month != null) 'month': month, 'monthlyLimit': monthlyLimit},
+      );
+      final goal = response.data?['goal'];
+      if (goal is! Map<String, dynamic>) {
+        throw ApiException('Budget goal response was empty.');
+      }
+      return BudgetGoal.fromJson(goal);
+    } on DioException catch (error) {
+      throw ApiException(
+        _messageFromDio(error, fallback: 'Could not save budget goal.'),
+      );
+    }
+  }
+
   String _messageFromDio(DioException error, {required String fallback}) {
     final data = error.response?.data;
     if (data is Map && data['message'] != null) return '${data['message']}';
@@ -500,3 +621,4 @@ class ApiService {
     return fallback;
   }
 }
+

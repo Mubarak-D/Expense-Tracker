@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme.dart';
 import '../providers/stats_provider.dart';
 import '../services/api_service.dart';
+import '../widgets/budget_goal_card.dart';
+import '../widgets/insight_helpers.dart';
 
 class InsightsScreen extends ConsumerWidget {
   const InsightsScreen({super.key});
@@ -76,6 +78,8 @@ class _InsightsContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _HeroSpendCard(stats: stats),
+          const SizedBox(height: 14),
+          const BudgetGoalCard(),
           const SizedBox(height: 14),
           _StatGrid(stats: stats),
           const SizedBox(height: 18),
@@ -340,7 +344,9 @@ class _CategoryBreakdown extends StatelessWidget {
             for (var index = 0; index < visibleItems.length; index++)
               _CategoryRow(
                 item: visibleItems[index],
-                progress: maxTotal == 0 ? 0 : visibleItems[index].total / maxTotal,
+                progress: maxTotal == 0
+                    ? 0
+                    : visibleItems[index].total / maxTotal,
                 index: index,
               ),
         ],
@@ -377,9 +383,9 @@ class _CategoryRow extends StatelessWidget {
                   Expanded(
                     child: Text(
                       item.category,
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: EtmlColors.text,
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.labelLarge?.copyWith(color: EtmlColors.text),
                     ),
                   ),
                   Text(
@@ -520,11 +526,7 @@ class _InsightsEmpty extends StatelessWidget {
       decoration: glassDecoration(),
       child: Column(
         children: [
-          const Icon(
-            Icons.insights_rounded,
-            color: EtmlColors.cyan,
-            size: 44,
-          ),
+          const Icon(Icons.insights_rounded, color: EtmlColors.cyan, size: 44),
           const SizedBox(height: 14),
           Text(
             'No expenses yet',
@@ -653,35 +655,4 @@ class _SparklinePainter extends CustomPainter {
   bool shouldRepaint(covariant _SparklinePainter oldDelegate) {
     return oldDelegate.values != values;
   }
-}
-
-BoxDecoration glassDecoration() {
-  return BoxDecoration(
-    color: Colors.white.withValues(alpha: 0.052),
-    borderRadius: BorderRadius.circular(20),
-    border: Border.all(color: Colors.white.withValues(alpha: 0.085)),
-    boxShadow: [
-      BoxShadow(
-        color: Colors.black.withValues(alpha: 0.14),
-        blurRadius: 24,
-        offset: const Offset(0, 14),
-      ),
-    ],
-  );
-}
-
-String formatMoney(double value) {
-  final rounded = value.round();
-  final raw = rounded.toString();
-  final buffer = StringBuffer();
-
-  for (var index = 0; index < raw.length; index++) {
-    final positionFromEnd = raw.length - index;
-    buffer.write(raw[index]);
-    if (positionFromEnd > 1 && positionFromEnd % 3 == 1) {
-      buffer.write(',');
-    }
-  }
-
-  return '\$${buffer.toString()}';
 }
