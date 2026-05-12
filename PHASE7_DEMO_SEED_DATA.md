@@ -20,36 +20,25 @@ mongodb://localhost:27017/etml
 ## Demo Login
 
 ```text
-Email: demo@etml.local
+Email: demo@etml.app
 Password: password123
-```
-
-These can be overridden before running the command:
-
-```bash
-DEMO_SEED_EMAIL=demo@example.com DEMO_SEED_PASSWORD=password123 npm run seed:demo
-```
-
-PowerShell:
-
-```powershell
-$env:DEMO_SEED_EMAIL='demo@example.com'
-$env:DEMO_SEED_PASSWORD='password123'
-npm run seed:demo
 ```
 
 ## Seeded Content
 
 - One dedicated demo user
-- Eighteen realistic expenses across the current and previous month
-- Three manual ML correction examples for feedback export and summary views
-- A current-month budget goal with visible progress
-- Three active monthly recurring expense templates
+- Thirty-six realistic expenses across the current and previous month
+- Ten manual ML correction examples for feedback export and summary views
+- High-confidence accepted ML predictions and low-confidence corrected examples
+- A current-month budget goal with visible progress below the over-budget state
+- Five active monthly recurring expense templates
 - Category variety across food, transport, bills, shopping, health,
-  entertainment, and education
+  entertainment, education, and other
 
 ## Safety
 
 The seed command only replaces data for the configured demo email. It removes
 that demo user's expenses, goals, and recurring templates, then recreates the
 demo account from scratch. Other users are left untouched.
+
+See `DEMO_DATA.md` for the full launch/demo verification flow.

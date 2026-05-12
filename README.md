@@ -16,6 +16,7 @@ ETML/
 |-- PHASE5_RECURRING_EXPENSES.md
 |-- PHASE6_LEDGER_FILTERS.md
 |-- PHASE7_DEMO_SEED_DATA.md
+|-- DEMO_DATA.md
 `-- README.md
 ```
 
@@ -76,7 +77,7 @@ npm run seed:demo
 Default demo login:
 
 ```text
-demo@etml.local
+demo@etml.app
 password123
 ```
 
@@ -160,3 +161,4 @@ python -m compileall app
 - `PHASE5_RECURRING_EXPENSES.md` documents recurring expense templates.
 - `PHASE6_LEDGER_FILTERS.md` documents local ledger search and filters.
 - `PHASE7_DEMO_SEED_DATA.md` documents the demo seed data workflow.
+- `DEMO_DATA.md` documents the launch-ready demo account and verification flow.

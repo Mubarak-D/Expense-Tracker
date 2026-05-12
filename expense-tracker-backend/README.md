@@ -21,7 +21,7 @@ npm run seed:demo
 Default demo login:
 
 ```text
-demo@etml.local
+demo@etml.app
 password123
 ```
 
