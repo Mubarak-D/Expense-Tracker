@@ -15,6 +15,7 @@ ETML/
 |-- PHASE4_BUDGET_GOALS.md
 |-- PHASE5_RECURRING_EXPENSES.md
 |-- PHASE6_LEDGER_FILTERS.md
+|-- PHASE7_DEMO_SEED_DATA.md
 `-- README.md
 ```
 
@@ -33,6 +34,7 @@ ETML/
 - Monthly budget goals with progress and achievement states
 - Recurring expense templates that can be posted into the ledger
 - Local ledger search and category filters
+- Demo seed data for portfolio screenshots, walkthroughs, and QA
 
 ## Architecture
 
@@ -62,6 +64,20 @@ cd expense-tracker-backend
 npm install
 cp .env.example .env
 npm run dev
+```
+
+Load a realistic demo account:
+
+```bash
+cd expense-tracker-backend
+npm run seed:demo
+```
+
+Default demo login:
+
+```text
+demo@etml.local
+password123
 ```
 
 Important endpoints:
@@ -143,3 +159,4 @@ python -m compileall app
 - `PHASE4_BUDGET_GOALS.md` documents monthly budget goals and progress.
 - `PHASE5_RECURRING_EXPENSES.md` documents recurring expense templates.
 - `PHASE6_LEDGER_FILTERS.md` documents local ledger search and filters.
+- `PHASE7_DEMO_SEED_DATA.md` documents the demo seed data workflow.

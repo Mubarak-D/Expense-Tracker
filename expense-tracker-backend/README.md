@@ -12,6 +12,19 @@ cp .env.example .env
 npm run dev
 ```
 
+Seed a complete demo account for local demos and screenshots:
+
+```bash
+npm run seed:demo
+```
+
+Default demo login:
+
+```text
+demo@etml.local
+password123
+```
+
 Example `.env`:
 
 ```text
